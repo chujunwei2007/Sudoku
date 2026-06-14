@@ -40,8 +40,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:linear-gradient(135deg,#
 .cell.user-input.wrong{color:#e74c3c}
 .cell.notes{display:grid !important;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);align-items:center;justify-items:center;padding:0}
 .cell.notes span{font-size:clamp(6px,1.8vw,10px);line-height:1.2;text-align:center;padding:0 1px;border-radius:2px;transition:background .15s}
-.cell.notes span.highlight-cand{background:#4CAF50 !important;border-radius:3px;font-weight:700;color:#fff;padding:1px 2px}
-/* 画图模式标记颜色 */
+.cell.notes span.highlight-cand{background:#FFF9C4 !important;border-radius:3px;font-weight:700;color:#222;padding:1px 2px}
 .cell.notes span.mark-green{background:#A5D6A7 !important;color:#1B5E20;font-weight:700}
 .cell.notes span.mark-red{background:#EF9A9A !important;color:#B71C1C;font-weight:700}
 .cell.highlight{background:#FFF9C4 !important}
@@ -54,7 +53,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:linear-gradient(135deg,#
 .toolbar-wrap{scrollbar-width:none}
 .toolbar{display:flex;gap:4px;justify-content:space-around;padding:2px 0}
 .tb-btn{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:5px 8px 3px 8px;border:none;border-radius:6px;background:#F0F0F0;color:#444;font-size:12px;cursor:pointer;transition:all .15s;flex-shrink:0}
-.tb-btn .tb-icon{font-size:14px;line-height:1.2}
+.tb-btn .tb-icon{font-size:14px;line-height:1.2;color:#222}
 .tb-btn .tb-label{font-size:9px;color:#888;line-height:1}
 .tb-btn:hover{background:#E0E0E0}
 .tb-btn.active{background:#81C784;color:#1B5E20}
@@ -278,7 +277,8 @@ var timerSec = 0, timerInterval = null;
 /* ========== 画图模式状态 ========== */
 var drawMode = false;
 var drawMarkMode = 'none'; // 'none' | 'green' | 'red'
-var drawSelectedNum = 0;  // 0 = 未选中
+var drawSelectedNum = 0;  // 0 = 未选中（底部数字键盘UI用）
+var drawHighlightNum = 0; // 0 = 无高亮，非零=高亮该数字的候选数
 // markGreen[r][c] = Set of numbers marked green in cell (r,c)
 // markRed[r][c]   = Set of numbers marked red in cell (r,c)
 var markGreen = [], markRed = [];
@@ -431,9 +431,15 @@ function toggleDrawMode(){
     drawNumpad.classList.add('show');
     bottomBar.style.display = 'none';
     credit.style.display = 'none';
-    // 重置画图子模式
+    // 从游戏模式进入解题模式：继承高亮状态
+    if(selected.r >= 0 && board[selected.r][selected.c] !== 0){
+      drawHighlightNum = board[selected.r][selected.c];
+      drawSelectedNum = drawHighlightNum;
+    } else {
+      drawHighlightNum = 0;
+      drawSelectedNum = 0;
+    }
     drawMarkMode = 'none';
-    drawSelectedNum = 0;
     updateDrawToolbarUI();
     renderDrawNumpad();
   } else {
@@ -444,6 +450,8 @@ function toggleDrawMode(){
     drawNumpad.classList.remove('show');
     bottomBar.style.display = 'flex';
     credit.style.display = 'block';
+    drawHighlightNum = 0;
+    drawSelectedNum = 0;
   }
   renderBoard();
 }
@@ -470,9 +478,15 @@ function renderDrawNumpad(){
 }
 
 function selectDrawNum(n){
-  if(drawSelectedNum === n) drawSelectedNum = 0;
-  else drawSelectedNum = n;
+  // 点击底部数字：切换高亮，同时更新键盘UI选中状态
+  if(drawHighlightNum === n){
+    drawHighlightNum = 0;
+  } else {
+    drawHighlightNum = n;
+  }
+  drawSelectedNum = drawHighlightNum;
   renderDrawNumpad();
+  renderBoard();
 }
 
 function saveDrawUndo(){
@@ -594,14 +608,14 @@ function renderBoard(){
       } else if(notes[r][c].size > 0 || markGreen[r][c].size > 0 || markRed[r][c].size > 0){
         // 显示笔记 或 画图标记
         cell.classList.add('notes');
-        var selVal = (selected.r >= 0) ? board[selected.r][selected.c] : 0;
+        var highlightVal = drawMode ? drawHighlightNum : ((selected.r >= 0) ? board[selected.r][selected.c] : 0);
         for(var n=1;n<=9;n++){
           var s = document.createElement('span');
           var hasN = notes[r][c].has(n);
           var isGreen = markGreen[r][c].has(n);
           var isRed = markRed[r][c].has(n);
           s.textContent = hasN ? String(n) : (isGreen || isRed) ? String(n) : '';
-          if(hasN && selVal === n) s.classList.add('highlight-cand');
+          if(hasN && highlightVal === n) s.classList.add('highlight-cand');
           if(isGreen) s.classList.add('mark-green');
           if(isRed) s.classList.add('mark-red');
           cell.appendChild(s);
@@ -635,7 +649,15 @@ function renderBoard(){
       (function(rr, cc){
         cell.addEventListener('click', function(){
           if(drawMode){
-            applyDrawMark(rr, cc);
+            if(board[rr][cc] !== 0){
+              // 解题模式下点击有数字的格子：更新高亮状态（互斥），刷新棋盘
+              drawHighlightNum = board[rr][cc];
+              drawSelectedNum = drawHighlightNum;
+              renderDrawNumpad();
+              renderBoard();
+            } else {
+              applyDrawMark(rr, cc);
+            }
           } else {
             selectCell(rr, cc);
           }
