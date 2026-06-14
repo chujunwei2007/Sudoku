@@ -17,7 +17,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:linear-gradient(135deg,#
 .top-bar .title .version{font-size:10px;font-weight:400;color:#999;margin-left:4px;line-height:1}
 .top-bar .lives{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:18px;letter-spacing:2px;white-space:nowrap}
 .top-bar .info{position:absolute;right:0;top:50%;transform:translateY(-50%);display:flex;align-items:center;gap:8px;font-size:13px;color:#666}
-.top-bar .mistakes{color:#e74c3c;font-weight:600}
+.top-bar .mistakes{display:none}
 .top-bar .timer{color:#555;font-variant-numeric:tabular-nums}
 
 /* 进度条 */
@@ -26,8 +26,8 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:linear-gradient(135deg,#
 .progress-bar{height:100%;background:linear-gradient(90deg,#4CAF50,#8BC34A);border-radius:3px;transition:width .3s}
 
 /* 棋盘 */
-.board-wrap{position:relative;width:100%;margin-bottom:10px}
-.board{display:grid;grid-template-columns:repeat(9,1fr);gap:0;flex:1;min-width:0;aspect-ratio:1;border:2.5px solid #2C2C2A;border-radius:4px;overflow:hidden;background:#2C2C2A;padding:0}
+.board-wrap{position:relative;width:100%;margin-bottom:10px;display:flex;justify-content:center}
+.board{display:grid;grid-template-columns:repeat(9,1fr);gap:0;flex:1;min-width:0;aspect-ratio:1;border:2.5px solid #2C2C2A;border-radius:4px;overflow:hidden;background:#2C2C2A;padding:0;width:100%;max-width:420px}
 .cell{position:relative;aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:clamp(14px,4vw,22px);cursor:pointer;user-select:none;transition:background .15s;border:none;background:#fff}
 .cell{border-top:0.5px solid #D3D1C7;border-left:0.5px solid #D3D1C7}
 .cell.box-top{border-top:2px solid #2C2C2A !important}
@@ -81,7 +81,8 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:linear-gradient(135deg,#
 /* 画图数字键盘 */
 .draw-numpad{width:100%;display:none;grid-template-columns:repeat(9,1fr);gap:3px;margin-bottom:6px}
 .draw-numpad.show{display:grid !important}
-.draw-numpad .draw-num-btn{display:flex;align-items:center;justify-content:center;padding:4px 0;border:none;border-radius:6px;background:#E8F5E9;color:#2E7D32;font-size:clamp(13px,3.5vw,18px);font-weight:700;cursor:pointer;transition:all .15s}
+.draw-numpad .draw-num-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px 0;border:none;border-radius:6px;background:#E8F5E9;color:#2E7D32;font-size:clamp(13px,3.5vw,18px);font-weight:700;cursor:pointer;transition:all .15s}
+.draw-numpad .draw-num-btn .remaining{font-size:8px;color:#888;font-weight:400;margin-top:1px}
 .draw-num-btn.selected{background:#A5D6A7 !important;color:#1B5E20}
 .draw-numpad .draw-num-btn:hover{background:#C8E6C9}
 .draw-numpad .draw-num-btn.selected{background:#C8E6C9;box-shadow:0 0 0 2px #2E7D32}
@@ -97,16 +98,14 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:linear-gradient(135deg,#
 .inline-msg{width:100%;padding:10px;text-align:center;border-radius:8px;font-size:15px;font-weight:600;margin-bottom:8px;animation:fadeIn .3s}
 .inline-msg.success{background:#E8F5E9;color:#2E7D32;border:1px solid #A5D6A7}
 .inline-msg.fail{background:#FFEBEE;color:#C62828;border:1px solid #EF9A9A}
-/* 棋盘坐标标签 */
-.board-frame{display:flex;flex-direction:column;align-items:flex-start;width:100%}
-.board-header{display:flex;width:100%;margin-bottom:2px}
-.board-header-corner{width:26px;flex-shrink:0}
-.board-col-labels{display:grid;grid-template-columns:repeat(9,1fr);flex:1;gap:0}
-.board-col-labels span{text-align:center;font-size:12px;color:#888;font-weight:600;padding:2px 0;line-height:1;user-select:none}
-.board-body{display:flex;width:100%}
-.board-row-labels{display:flex;flex-direction:column;width:26px;flex-shrink:0}
-.board-row-labels span{display:flex;align-items:center;justify-content:center;flex:1;font-size:12px;color:#888;font-weight:600;line-height:1;user-select:none}
-.board{flex:1;min-width:0}
+/* 棋盘坐标标签（已隐藏，最大化九宫格宽度） */
+.board-frame{display:flex;flex-direction:column;align-items:center;width:100%}
+.board-header{display:none}
+.board-header-corner{display:none}
+.board-col-labels{display:none}
+.board-body{display:flex;width:100%;justify-content:center}
+.board-row-labels{display:none}
+.board{flex:1;min-width:0;width:100%;max-width:420px}
 
 @keyframes fadeIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
 </style>
@@ -162,11 +161,11 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:linear-gradient(135deg,#
       <span class="tb-label" style="font-size:12px">快速笔</span>
     </button>
     <button class="tb-btn" id="btnUndo" title="撤销">
-      <span class="tb-icon">&#x21B6;</span>
+      <span class="tb-icon">&#x2190;</span>
       <span class="tb-label">撤销</span>
     </button>
     <button class="tb-btn" id="btnRedo" title="重做">
-      <span class="tb-icon">&#x21B7;</span>
+      <span class="tb-icon">&#x2192;</span>
       <span class="tb-label">重做</span>
     </button>
     <button class="tb-btn" id="btnNote" title="笔记模式">
@@ -186,8 +185,8 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:linear-gradient(135deg,#
       <button class="draw-btn" id="btnDrawExit" title="返回填数">返回填数</button>
       <div style="display:flex;gap:6px">
         <button class="draw-btn" id="btnDrawClear">清屏</button>
-        <button class="draw-btn" id="btnDrawUndo" title="撤销">&#x21B6;</button>
-        <button class="draw-btn" id="btnDrawRedo" title="重做">&#x21B7;</button>
+        <button class="draw-btn" id="btnDrawUndo" title="撤销">&#x2190;</button>
+        <button class="draw-btn" id="btnDrawRedo" title="重做">&#x2192;</button>
         <button class="draw-btn" id="btnDrawGreen" title="对号标记">&#x2713;</button>
         <button class="draw-btn" id="btnDrawRed" title="叉号标记">&#x2717;</button>
       </div>
@@ -431,9 +430,12 @@ function toggleDrawMode(){
     drawNumpad.classList.add('show');
     bottomBar.style.display = 'none';
     credit.style.display = 'none';
-    // 从游戏模式进入解题模式：继承高亮状态
-    if(selected.r >= 0 && board[selected.r][selected.c] !== 0){
-      drawHighlightNum = board[selected.r][selected.c];
+    // 进入解题模式：先保存选中格子的数字，再清除选中状态（绿色/黄色底纹消失）
+    var prevSelectedVal = (selected.r >= 0 && board[selected.r][selected.c] !== 0) ? board[selected.r][selected.c] : 0;
+    selected = {r:-1, c:-1};
+    // 设置候选数高亮
+    if(prevSelectedVal !== 0){
+      drawHighlightNum = prevSelectedVal;
       drawSelectedNum = drawHighlightNum;
     } else {
       drawHighlightNum = 0;
@@ -466,10 +468,12 @@ function updateDrawToolbarUI(){
 function renderDrawNumpad(){
   var el = document.getElementById('drawNumpad');
   el.innerHTML = '';
+  var counts = Array(10).fill(0);
+  for(var r=0;r<9;r++) for(var c=0;c<9;c++){ if(board[r][c]>=1 && board[r][c]<=9) counts[board[r][c]]++; }
   for(var n=1;n<=9;n++){
     var btn = document.createElement('div');
     btn.className = 'draw-num-btn' + (drawSelectedNum === n ? ' selected' : '');
-    btn.textContent = String(n);
+    btn.innerHTML = String(n) + '<span class="remaining">' + (9-counts[n]) + '</span>';
     (function(nn){
       btn.addEventListener('click', function(){ selectDrawNum(nn); });
     })(n);
