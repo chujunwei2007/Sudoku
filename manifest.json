@@ -1,0 +1,22 @@
+{
+  "name": "标准数独",
+  "short_name": "数独",
+  "description": "标准数独游戏，支持笔记、提示、画图解题等模式",
+  "start_url": "./sudoku.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#e8f0fe",
+  "theme_color": "#1976D2",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

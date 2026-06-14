@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<meta name="theme-color" content="#1976D2">
+<link rel="manifest" href="manifest.json">
+<title>标准数独</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',Arial,sans-serif;background:linear-gradient(135deg,#e8f0fe,#f5f0ff);min-height:100vh;display:flex;justify-content:center;align-items:center;padding:10px}
+.game-container{background:#fff;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,.12);max-width:420px;width:100%;padding:16px 12px 12px;display:flex;flex-direction:column;align-items:center}
+
+/* 顶栏 */
+.top-bar{width:100%;position:relative;margin-bottom:8px;padding:0 4px;height:36px}
+.top-bar .title{position:relative;left:0;top:50%;transform:translateY(-50%);font-size:20px;font-weight:700;color:#2C2C2A;white-space:nowrap;display:inline-flex;align-items:baseline}
+.top-bar .title .version{font-size:10px;font-weight:400;color:#999;margin-left:4px;line-height:1}
+.top-bar .lives{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:18px;letter-spacing:2px;white-space:nowrap}
+.top-bar .info{position:absolute;right:0;top:50%;transform:translateY(-50%);display:flex;align-items:center;gap:8px;font-size:13px;color:#666}
+.top-bar .mistakes{color:#e74c3c;font-weight:600}
+.top-bar .timer{color:#555;font-variant-numeric:tabular-nums}
+
+/* 进度条 */
+.progress-wrap{width:100%;margin-bottom:8px;padding:0 2px}
+.progress-bar-bg{width:100%;height:6px;background:#eee;border-radius:3px;overflow:hidden}
+.progress-bar{height:100%;background:linear-gradient(90deg,#4CAF50,#8BC34A);border-radius:3px;transition:width .3s}
+
+/* 棋盘 */
+.board-wrap{position:relative;width:100%;margin-bottom:10px}
+.board{display:grid;grid-template-columns:repeat(9,1fr);gap:0;flex:1;min-width:0;aspect-ratio:1;border:2.5px solid #2C2C2A;border-radius:4px;overflow:hidden;background:#2C2C2A;padding:0}
+.cell{position:relative;aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:clamp(14px,4vw,22px);cursor:pointer;user-select:none;transition:background .15s;border:none;background:#fff}
+.cell{border-top:0.5px solid #D3D1C7;border-left:0.5px solid #D3D1C7}
+.cell.box-top{border-top:2px solid #2C2C2A !important}
+.cell.box-left{border-left:2px solid #2C2C2A !important}
+.cell.outer-top{border-top:2.5px solid #2C2C2A !important}
+.cell.outer-left{border-left:2.5px solid #2C2C2A !important}
+
+.cell.given{font-weight:700;color:#2C2C2A}
+.cell.user-input{color:#1976D2;font-weight:600}
+.cell.user-input.wrong{color:#e74c3c}
+.cell.notes{display:grid !important;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);align-items:center;justify-items:center;padding:0}
+.cell.notes span{font-size:clamp(6px,1.8vw,10px);line-height:1.2;text-align:center;padding:0 1px;border-radius:2px;transition:background .15s}
+.cell.notes span.highlight-cand{background:#4CAF50 !important;border-radius:3px;font-weight:700;color:#fff;padding:1px 2px}
+/* 画图模式标记颜色 */
+.cell.notes span.mark-green{background:#A5D6A7 !important;color:#1B5E20;font-weight:700}
+.cell.notes span.mark-red{background:#EF9A9A !important;color:#B71C1C;font-weight:700}
+.cell.highlight{background:#FFF9C4 !important}
+.cell.highlight-same{background:#B3E5FC !important}
+.cell.selected{background:#388E3C !important}
+
+/* 工具栏（游戏模式） */
+.toolbar-wrap{width:100%;margin-bottom:10px}
+.toolbar-wrap::-webkit-scrollbar{display:none}
+.toolbar-wrap{scrollbar-width:none}
+.toolbar{display:flex;gap:4px;justify-content:space-around;padding:2px 0}
+.tb-btn{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:5px 8px 3px 8px;border:none;border-radius:6px;background:#F0F0F0;color:#444;font-size:12px;cursor:pointer;transition:all .15s;flex-shrink:0}
+.tb-btn .tb-icon{font-size:14px;line-height:1.2}
+.tb-btn .tb-label{font-size:9px;color:#888;line-height:1}
+.tb-btn:hover{background:#E0E0E0}
+.tb-btn.active{background:#81C784;color:#1B5E20}
+.tb-btn.draw-active{background:#E1BEE7;color:#6A1B9A;font-weight:700}
+.tb-btn .badge{position:absolute;top:-4px;right:-4px;background:#e74c3c;color:#fff;font-size:9px;min-width:14px;height:14px;border-radius:7px;display:flex;align-items:center;justify-content:center;padding:0 2px}
+
+/* 画图工具栏（画图模式） */
+.draw-toolbar{width:100%;display:none;flex-direction:column;gap:4px;margin-bottom:8px}
+.draw-toolbar.show{display:flex !important}
+.draw-row{display:flex;justify-content:space-between;gap:4px;width:100%}
+.draw-btn{display:flex;align-items:center;justify-content:center;gap:2px;padding:4px 8px;border:none;border-radius:6px;background:#F0F0F0;color:#444;font-size:11px;cursor:pointer;transition:all .15s;white-space:nowrap;min-width:30px}
+.draw-btn:hover{background:#E0E0E0}
+.draw-btn.mode-green{background:#A5D6A7 !important;color:#1B5E20;font-weight:700}
+.draw-btn.mode-red{background:#EF9A9A !important;color:#B71C1C;font-weight:700}
+.draw-btn .badge{position:absolute;top:-4px;right:-4px;background:#e74c3c;color:#fff;font-size:9px;min-width:14px;height:14px;border-radius:7px;display:flex;align-items:center;justify-content:center;padding:0 2px}
+
+/* 数字键盘 */
+.numpad{width:100%;display:grid;grid-template-columns:repeat(9,1fr);gap:3px;margin-bottom:6px}
+.numpad .num-btn{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px 0;border:none;border-radius:6px;background:#E8F5E9;color:#2E7D32;font-size:clamp(13px,3.5vw,18px);font-weight:700;cursor:pointer;transition:all .15s}
+.numpad .num-btn:hover{background:#C8E6C9}
+.numpad .num-btn.disabled{background:#F5F5F5;color:#ccc;cursor:not-allowed}
+.numpad .num-btn.dimmed{color:#bbb !important}
+.numpad .num-btn .remaining{font-size:8px;color:#888;font-weight:400;margin-top:1px}
+
+/* 画图数字键盘 */
+.draw-numpad{width:100%;display:none;grid-template-columns:repeat(9,1fr);gap:3px;margin-bottom:6px}
+.draw-numpad.show{display:grid !important}
+.draw-numpad .draw-num-btn{display:flex;align-items:center;justify-content:center;padding:4px 0;border:none;border-radius:6px;background:#E8F5E9;color:#2E7D32;font-size:clamp(13px,3.5vw,18px);font-weight:700;cursor:pointer;transition:all .15s}
+.draw-num-btn.selected{background:#A5D6A7 !important;color:#1B5E20}
+.draw-numpad .draw-num-btn:hover{background:#C8E6C9}
+.draw-numpad .draw-num-btn.selected{background:#C8E6C9;box-shadow:0 0 0 2px #2E7D32}
+
+/* 底部栏 */
+.bottom-bar{width:100%;display:flex;justify-content:space-between;align-items:center;padding:0 2px}
+.bottom-bar select{padding:5px 8px;border:1px solid #ccc;border-radius:6px;font-size:13px;background:#fff;cursor:pointer}
+.bottom-bar .new-game-btn{padding:6px 18px;border:none;border-radius:8px;background:#1976D2;color:#fff;font-size:13px;font-weight:600;cursor:pointer;transition:background .15s}
+.bottom-bar .new-game-btn:hover{background:#1565C0}
+.credit{width:100%;text-align:center;font-size:10px;color:#aaa;margin-top:4px;user-select:none}
+
+/* 内联提示条 */
+.inline-msg{width:100%;padding:10px;text-align:center;border-radius:8px;font-size:15px;font-weight:600;margin-bottom:8px;animation:fadeIn .3s}
+.inline-msg.success{background:#E8F5E9;color:#2E7D32;border:1px solid #A5D6A7}
+.inline-msg.fail{background:#FFEBEE;color:#C62828;border:1px solid #EF9A9A}
+/* 棋盘坐标标签 */
+.board-frame{display:flex;flex-direction:column;align-items:flex-start;width:100%}
+.board-header{display:flex;width:100%;margin-bottom:2px}
+.board-header-corner{width:26px;flex-shrink:0}
+.board-col-labels{display:grid;grid-template-columns:repeat(9,1fr);flex:1;gap:0}
+.board-col-labels span{text-align:center;font-size:12px;color:#888;font-weight:600;padding:2px 0;line-height:1;user-select:none}
+.board-body{display:flex;width:100%}
+.board-row-labels{display:flex;flex-direction:column;width:26px;flex-shrink:0}
+.board-row-labels span{display:flex;align-items:center;justify-content:center;flex:1;font-size:12px;color:#888;font-weight:600;line-height:1;user-select:none}
+.board{flex:1;min-width:0}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+<div class="game-container" id="app">
+  <div class="top-bar">
+    <span class="title">数独<span class="version">V1.0</span></span>
+    <span class="lives" id="lives"></span>
+    <div class="info">
+      <span class="mistakes" id="mistakes">0/3</span>
+      <span class="timer" id="timer">00:00</span>
+    </div>
+  </div>
+  <div class="progress-wrap">
+    <div class="progress-bar-bg"><div class="progress-bar" id="progressBar" style="width:0%"></div></div>
+  </div>
+  <div class="board-wrap">
+    <div class="board-frame">
+      <div class="board-header">
+        <div class="board-header-corner"></div>
+        <div class="board-col-labels">
+          <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span>
+        </div>
+      </div>
+      <div class="board-body">
+        <div class="board-row-labels">
+          <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span>
+        </div>
+        <div class="board" id="board"></div>
+      </div>
+    </div>
+  </div>
+  <div id="inlineMsg" class="inline-msg" style="display:none"></div>
+
+  <!-- 游戏模式工具栏 -->
+  <div class="toolbar-wrap" id="toolbarWrap">
+  <div class="toolbar" id="gameToolbar">
+    <button class="tb-btn" id="btnDraw" title="画图解题模式">
+      <span class="tb-icon">&#x1F4D0;</span>
+      <span class="tb-label">解题</span>
+    </button>
+    <button class="tb-btn" id="btnHint" title="提示">
+      <span class="tb-icon">&#x1F4A1;</span>
+      <span class="tb-label">提示</span>
+      <span class="badge" id="hintBadge">3</span>
+    </button>
+    <button class="tb-btn" id="btnErase" title="橡皮擦">
+      <span class="tb-icon">&#x1F9F9;</span>
+      <span class="tb-label">橡皮</span>
+    </button>
+    <button class="tb-btn" id="btnQuickPen">
+      <span class="tb-label" style="font-size:12px">快速笔</span>
+    </button>
+    <button class="tb-btn" id="btnUndo" title="撤销">
+      <span class="tb-icon">&#x21B6;</span>
+      <span class="tb-label">撤销</span>
+    </button>
+    <button class="tb-btn" id="btnRedo" title="重做">
+      <span class="tb-icon">&#x21B7;</span>
+      <span class="tb-label">重做</span>
+    </button>
+    <button class="tb-btn" id="btnNote" title="笔记模式">
+      <span class="tb-icon">&#x270F;&#xFE0F;</span>
+      <span class="tb-label">铅笔</span>
+    </button>
+    <button class="tb-btn" id="btnDushu">
+      <span class="tb-label" style="font-size:12px">独数</span>
+      <span class="badge" id="dushuBadge" style="display:none">0</span>
+    </button>
+  </div>
+  </div>
+
+  <!-- 画图模式工具栏 -->
+  <div class="draw-toolbar" id="drawToolbar">
+    <div class="draw-row" style="justify-content:space-between;width:100%">
+      <button class="draw-btn" id="btnDrawExit" title="返回填数">返回填数</button>
+      <div style="display:flex;gap:6px">
+        <button class="draw-btn" id="btnDrawClear">清屏</button>
+        <button class="draw-btn" id="btnDrawUndo" title="撤销">&#x21B6;</button>
+        <button class="draw-btn" id="btnDrawRedo" title="重做">&#x21B7;</button>
+        <button class="draw-btn" id="btnDrawGreen" title="对号标记">&#x2713;</button>
+        <button class="draw-btn" id="btnDrawRed" title="叉号标记">&#x2717;</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 游戏模式数字键盘 -->
+  <div class="numpad" id="numpad"></div>
+
+  <!-- 画图模式数字键盘 -->
+  <div class="draw-numpad" id="drawNumpad"></div>
+
+  <div class="bottom-bar">
+    <select id="difficulty">
+      <option value="easy">简单</option>
+      <option value="medium" selected>中等</option>
+      <option value="hard">困难</option>
+      <option value="hell">地狱</option>
+    </select>
+    <button class="new-game-btn" id="btnNewGame">新游戏</button>
+  </div>
+  <div class="credit">设计：褚军伟</div>
+</div>
+
+<script>
+"use strict";
+
+/* ========== 数独生成器 ========== */
+function generateSudoku(difficulty){
+  var board = Array.from({length:9}, function(){ return Array(9).fill(0); });
+  function shuffle(a){
+    for(var i=a.length-1;i>0;i--){
+      var j = Math.floor(Math.random()*(i+1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+  function isValid(b, r, c, num){
+    for(var i=0;i<9;i++){
+      if(b[r][i] === num) return false;
+      if(b[i][c] === num) return false;
+    }
+    var br = Math.floor(r/3)*3, bc = Math.floor(c/3)*3;
+    for(var i=br;i<br+3;i++){
+      for(var j=bc;j<bc+3;j++){
+        if(b[i][j] === num) return false;
+      }
+    }
+    return true;
+  }
+  function fill(b){
+    for(var r=0;r<9;r++){
+      for(var c=0;c<9;c++){
+        if(b[r][c] === 0){
+          var nums = shuffle([1,2,3,4,5,6,7,8,9]);
+          for(var k=0;k<nums.length;k++){
+            if(isValid(b, r, c, nums[k])){
+              b[r][c] = nums[k];
+              if(fill(b)) return true;
+              b[r][c] = 0;
+            }
+          }
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+  fill(board);
+  var solution = board.map(function(r){ return r.slice(); });
+  var blanks = {easy:38, medium:46, hard:54, hell:60}[difficulty] || 46;
+  var positions = shuffle(Array.from({length:81}, function(_, i){ return i; }));
+  for(var i=0;i<blanks;i++){
+    var rr = Math.floor(positions[i]/9), cc = positions[i]%9;
+    board[rr][cc] = 0;
+  }
+  return { solution:solution, puzzle:board.map(function(r){ return r.slice(); }) };
+}
+
+/* ========== 游戏状态 ========== */
+var puzzle = [], solution = [], board = [], notes = [];
+var selected = {r:-1, c:-1}, noteMode = false, mistakes = 0, maxMistakes = 3;
+var hintsLeft = 3, gameOver = false, won = false;
+var undoStack = [], redoStack = [];
+var timerSec = 0, timerInterval = null;
+
+/* ========== 画图模式状态 ========== */
+var drawMode = false;
+var drawMarkMode = 'none'; // 'none' | 'green' | 'red'
+var drawSelectedNum = 0;  // 0 = 未选中
+// markGreen[r][c] = Set of numbers marked green in cell (r,c)
+// markRed[r][c]   = Set of numbers marked red in cell (r,c)
+var markGreen = [], markRed = [];
+var drawUndoStack = [], drawRedoStack = [];
+
+/* ========== 工具函数 ========== */
+function cloneBoard(b){ return b.map(function(r){ return r.slice(); }); }
+function cloneNotes(ns){
+  return ns.map(function(row){
+    return row.map(function(s){ return new Set(Array.from(s)); });
+  });
+}
+function cloneMarks(m){
+  return m.map(function(row){
+    return row.map(function(s){ return new Set(Array.from(s)); });
+  });
+}
+
+/* ========== 初始化 ========== */
+function initGame(){
+  var diff = document.getElementById('difficulty').value;
+  var gen = generateSudoku(diff);
+  solution = gen.solution;
+  puzzle = gen.puzzle.map(function(r){ return r.slice(); });
+  board = puzzle.map(function(r){ return r.slice(); });
+  notes = Array.from({length:9}, function(){
+    return Array.from({length:9}, function(){ return new Set(); });
+  });
+  initMarks();
+  mistakes = 0; maxMistakes = 3; hintsLeft = 3;
+  gameOver = false; won = false;
+  selected = {r:-1, c:-1}; noteMode = false;
+  undoStack = []; redoStack = [];
+  clearInterval(timerInterval); timerSec = 0;
+  timerInterval = setInterval(function(){
+    if(!gameOver && !won){ timerSec++; updateTimer(); }
+  }, 1000);
+  document.getElementById('btnNote').classList.remove('active');
+  // 退出画图模式
+  if(drawMode) toggleDrawMode();
+  updateLives(); updateMistakes(); updateHintBadge(); updateDushuBadge();
+  renderBoard(); renderNumpad();
+}
+
+/* ========== 候选数计算 ========== */
+function getCandidates(r, c){
+  if(board[r][c] !== 0) return [];
+  var used = new Set();
+  for(var i=0;i<9;i++){
+    used.add(board[r][i]);
+    used.add(board[i][c]);
+  }
+  var br = Math.floor(r/3)*3, bc = Math.floor(c/3)*3;
+  for(var i=br;i<br+3;i++){
+    for(var j=bc;j<bc+3;j++){
+      used.add(board[i][j]);
+    }
+  }
+  var cands = [];
+  for(var n=1;n<=9;n++) if(!used.has(n)) cands.push(n);
+  return cands;
+}
+
+/* ========== 候选数自动清除：填入数字后，清除同行/列/宫的相同候选数 ========== */
+function removeCandFromPeers(r, c, n){
+  for(var i=0;i<9;i++){
+    if(i !== c) notes[r][i].delete(n);
+  }
+  for(var i=0;i<9;i++){
+    if(i !== r) notes[i][c].delete(n);
+  }
+  var br=Math.floor(r/3)*3, bc=Math.floor(c/3)*3;
+  for(var i=br;i<br+3;i++){
+    for(var j=bc;j<bc+3;j++){
+      if(i===r&&j===c) continue;
+      notes[i][j].delete(n);
+    }
+  }
+  updateDushuBadge();
+}
+
+/* ========== 独数检测 ========== */
+function getDushuCells(){
+  var cells = [];
+  for(var r=0;r<9;r++){
+    for(var c=0;c<9;c++){
+      if(puzzle[r][c] !== 0 || board[r][c] !== 0) continue;
+      if(notes[r][c].size === 1){
+        var val = Array.from(notes[r][c])[0];
+        cells.push({r:r, c:c, val:val});
+      }
+    }
+  }
+  return cells;
+}
+
+function updateDushuBadge(){
+  var el = document.getElementById('dushuBadge');
+  var cells = getDushuCells();
+  if(cells.length > 0){
+    el.textContent = cells.length;
+    el.style.display = 'flex';
+  } else {
+    el.style.display = 'none';
+  }
+}
+
+function fillDushu(){
+  if(gameOver || won) return;
+  var cells = getDushuCells();
+  if(cells.length === 0) return;
+  saveUndo();
+  for(var i=0;i<cells.length;i++){
+    var cell = cells[i];
+    board[cell.r][cell.c] = cell.val;
+    notes[cell.r][cell.c].clear();
+    removeCandFromPeers(cell.r, cell.c, cell.val);
+  }
+  redoStack = [];
+  renderBoard(); renderNumpad();
+  if(checkWin()) endGame(true);
+}
+
+/* ========== 画图模式 ========== */
+function initMarks(){
+  markGreen = Array.from({length:9}, function(){
+    return Array.from({length:9}, function(){ return new Set(); });
+  });
+  markRed = Array.from({length:9}, function(){
+    return Array.from({length:9}, function(){ return new Set(); });
+  });
+  drawUndoStack = []; drawRedoStack = [];
+}
+
+function toggleDrawMode(){
+  drawMode = !drawMode;
+  var drawBtn = document.getElementById('btnDraw');
+  var gameToolbar = document.getElementById('gameToolbar');
+  var drawToolbar = document.getElementById('drawToolbar');
+  var numpad = document.getElementById('numpad');
+  var drawNumpad = document.getElementById('drawNumpad');
+  var bottomBar = document.querySelector('.bottom-bar');
+  var credit = document.querySelector('.credit');
+
+  if(drawMode){
+    drawBtn.classList.add('draw-active');
+    gameToolbar.style.display = 'none';
+    drawToolbar.classList.add('show');
+    numpad.style.display = 'none';
+    drawNumpad.classList.add('show');
+    bottomBar.style.display = 'none';
+    credit.style.display = 'none';
+    // 重置画图子模式
+    drawMarkMode = 'none';
+    drawSelectedNum = 0;
+    updateDrawToolbarUI();
+    renderDrawNumpad();
+  } else {
+    drawBtn.classList.remove('draw-active');
+    gameToolbar.style.display = 'flex';
+    drawToolbar.classList.remove('show');
+    numpad.style.display = 'grid';
+    drawNumpad.classList.remove('show');
+    bottomBar.style.display = 'flex';
+    credit.style.display = 'block';
+  }
+  renderBoard();
+}
+
+function updateDrawToolbarUI(){
+  var btnG = document.getElementById('btnDrawGreen');
+  var btnR = document.getElementById('btnDrawRed');
+  btnG.className = 'draw-btn' + (drawMarkMode === 'green' ? ' mode-green' : '');
+  btnR.className = 'draw-btn' + (drawMarkMode === 'red' ? ' mode-red' : '');
+}
+
+function renderDrawNumpad(){
+  var el = document.getElementById('drawNumpad');
+  el.innerHTML = '';
+  for(var n=1;n<=9;n++){
+    var btn = document.createElement('div');
+    btn.className = 'draw-num-btn' + (drawSelectedNum === n ? ' selected' : '');
+    btn.textContent = String(n);
+    (function(nn){
+      btn.addEventListener('click', function(){ selectDrawNum(nn); });
+    })(n);
+    el.appendChild(btn);
+  }
+}
+
+function selectDrawNum(n){
+  if(drawSelectedNum === n) drawSelectedNum = 0;
+  else drawSelectedNum = n;
+  renderDrawNumpad();
+}
+
+function saveDrawUndo(){
+  drawUndoStack.push({
+    markGreen: cloneMarks(markGreen),
+    markRed: cloneMarks(markRed)
+  });
+  if(drawUndoStack.length > 50) drawUndoStack.shift();
+}
+
+function drawUndo(){
+  if(drawUndoStack.length === 0) return;
+  drawRedoStack.push({
+    markGreen: cloneMarks(markGreen),
+    markRed: cloneMarks(markRed)
+  });
+  var state = drawUndoStack.pop();
+  markGreen = state.markGreen;
+  markRed = state.markRed;
+  renderBoard();
+}
+
+function drawRedo(){
+  if(drawRedoStack.length === 0) return;
+  drawUndoStack.push({
+    markGreen: cloneMarks(markGreen),
+    markRed: cloneMarks(markRed)
+  });
+  var state = drawRedoStack.pop();
+  markGreen = state.markGreen;
+  markRed = state.markRed;
+  renderBoard();
+}
+
+function drawClear(){
+  saveDrawUndo();
+  for(var r=0;r<9;r++) for(var c=0;c<9;c++){
+    markGreen[r][c].clear();
+    markRed[r][c].clear();
+  }
+  drawRedoStack = [];
+  renderBoard();
+}
+
+/* 应用标记到格子(r,c) */
+function applyDrawMark(r, c){
+  if(drawMarkMode === 'none' || drawSelectedNum === 0) return;
+  var n = drawSelectedNum;
+  saveDrawUndo();
+  if(drawMarkMode === 'green'){
+    // 标记为绿色，同时从红色中移除
+    markGreen[r][c].add(n);
+    markRed[r][c].delete(n);
+    // 同格内其他候选数标红
+    for(var m=1; m<=9; m++){
+      if(m !== n && notes[r][c].has(m)){
+        markRed[r][c].add(m);
+        markGreen[r][c].delete(m);
+      }
+    }
+    // 同行/列/宫的相同数字标红
+    autoMarkRedPeers(r, c, n);
+  } else if(drawMarkMode === 'red'){
+    // 标记为红色，同时从绿色中移除
+    markRed[r][c].add(n);
+    markGreen[r][c].delete(n);
+  }
+  drawRedoStack = [];
+  renderBoard();
+}
+
+/* 当(r,c)的候选数n被标绿时，同行/列/宫的其他格子中n标红 */
+function autoMarkRedPeers(r, c, n){
+  // 同行：只标红候选数中有 n 的格子
+  for(var j=0;j<9;j++){
+    if(j !== c && notes[r][j].has(n)){ markRed[r][j].add(n); markGreen[r][j].delete(n); }
+  }
+  // 同列：只标红候选数中有 n 的格子
+  for(var i=0;i<9;i++){
+    if(i !== r && notes[i][c].has(n)){ markRed[i][c].add(n); markGreen[i][c].delete(n); }
+  }
+  // 同宫：只标红候选数中有 n 的格子
+  var br = Math.floor(r/3)*3, bc = Math.floor(c/3)*3;
+  for(var i=br;i<br+3;i++){
+    for(var j=bc;j<bc+3;j++){
+      if(i===r && j===c) continue;
+      if(notes[i][j].has(n)){
+        markRed[i][j].add(n);
+        markGreen[i][j].delete(n);
+      }
+    }
+  }
+}
+
+/* ========== 渲染棋盘 ========== */
+function renderBoard(){
+  var boardEl = document.getElementById('board');
+  boardEl.innerHTML = '';
+  for(var r=0;r<9;r++){
+    for(var c=0;c<9;c++){
+      var cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.dataset.r = r; cell.dataset.c = c;
+
+      /* 边框 class */
+      if(r === 0) cell.classList.add('outer-top');
+      if(c === 0) cell.classList.add('outer-left');
+      if(r === 2 || r === 5) cell.classList.add('box-bottom');
+      if(r === 3 || r === 6) cell.classList.add('box-top');
+      if(c === 2 || c === 5) cell.classList.add('box-right');
+      if(c === 3 || c === 6) cell.classList.add('box-left');
+
+      var val = board[r][c];
+      var isGiven = puzzle[r][c] !== 0;
+      if(val !== 0){
+        cell.textContent = val;
+        cell.classList.add(isGiven ? 'given' : 'user-input');
+        if(!isGiven && val !== solution[r][c]) cell.classList.add('wrong');
+      } else if(notes[r][c].size > 0 || markGreen[r][c].size > 0 || markRed[r][c].size > 0){
+        // 显示笔记 或 画图标记
+        cell.classList.add('notes');
+        var selVal = (selected.r >= 0) ? board[selected.r][selected.c] : 0;
+        for(var n=1;n<=9;n++){
+          var s = document.createElement('span');
+          var hasN = notes[r][c].has(n);
+          var isGreen = markGreen[r][c].has(n);
+          var isRed = markRed[r][c].has(n);
+          s.textContent = hasN ? String(n) : (isGreen || isRed) ? String(n) : '';
+          if(hasN && selVal === n) s.classList.add('highlight-cand');
+          if(isGreen) s.classList.add('mark-green');
+          if(isRed) s.classList.add('mark-red');
+          cell.appendChild(s);
+        }
+      } else if(drawMode){
+        // 画图模式下，空格子也显示标记（如果有）
+        cell.classList.add('notes');
+        for(var n=1;n<=9;n++){
+          var s = document.createElement('span');
+          var isGreen = markGreen[r][c].has(n);
+          var isRed = markRed[r][c].has(n);
+          s.textContent = (isGreen || isRed) ? String(n) : '';
+          if(isGreen) s.classList.add('mark-green');
+          if(isRed) s.classList.add('mark-red');
+          cell.appendChild(s);
+        }
+      }
+      // 正常高亮逻辑（游戏模式和画图模式均保留）
+      if(selected.r === r && selected.c === c){
+        cell.classList.add('selected');
+      } else if(selected.r >= 0){
+        var sr = selected.r, sc = selected.c;
+        if(r === sr || c === sc || (Math.floor(r/3)===Math.floor(sr/3) && Math.floor(c/3)===Math.floor(sc/3))){
+          cell.classList.add('highlight');
+        }
+        if(board[r][c] === board[sr][sc] && board[r][c] !== 0 && (r !== sr || c !== sc)){
+          cell.classList.add('highlight-same');
+        }
+      }
+      // 点击事件
+      (function(rr, cc){
+        cell.addEventListener('click', function(){
+          if(drawMode){
+            applyDrawMark(rr, cc);
+          } else {
+            selectCell(rr, cc);
+          }
+        });
+      })(r, c);
+      boardEl.appendChild(cell);
+    }
+  }
+  updateProgress();
+  updateDushuBadge();
+}
+
+function renderNumpad(){
+  var npEl = document.getElementById('numpad');
+  npEl.innerHTML = '';
+  var counts = Array(10).fill(0);
+  for(var r=0;r<9;r++) for(var c=0;c<9;c++){ if(board[r][c]>=1 && board[r][c]<=9) counts[board[r][c]]++; }
+  // 判断当前选中小格是否有候选数
+  var selNotes = null;
+  if(selected.r >= 0 && board[selected.r][selected.c] === 0 && notes[selected.r][selected.c].size > 0){
+    selNotes = notes[selected.r][selected.c];
+  }
+  for(var n=1;n<=9;n++){
+    var btn = document.createElement('div');
+    var cls = 'num-btn' + (counts[n]>=9 ? ' disabled' : '');
+    if(selNotes && !selNotes.has(n)) cls += ' dimmed';
+    btn.className = cls;
+    btn.innerHTML = String(n) + '<span class="remaining">' + (9-counts[n]) + '</span>';
+    (function(nn){ btn.addEventListener('click', function(){ inputNumber(nn); }); })(n);
+    npEl.appendChild(btn);
+  }
+}
+
+/* ========== 交互（游戏模式） ========== */
+function selectCell(r, c){
+  if(gameOver || won) return;
+  selected = {r:r, c:c};
+  renderBoard();
+  renderNumpad();
+}
+
+function inputNumber(n){
+  if(gameOver || won || selected.r < 0) return;
+  var r = selected.r, c = selected.c;
+  if(puzzle[r][c] !== 0) return;
+  if(noteMode){
+    saveUndo();
+    var ns = notes[r][c];
+    if(ns.has(n)) ns.delete(n); else ns.add(n);
+    redoStack = [];
+    updateDushuBadge();
+  } else {
+    saveUndo();
+    board[r][c] = n;
+    notes[r][c].clear();
+    removeCandFromPeers(r, c, n);
+    redoStack = [];
+    if(n !== solution[r][c]){
+      mistakes++;
+      updateMistakes(); updateLives();
+      renderBoard();
+      if(mistakes >= maxMistakes){ endGame(false); return; }
+      (function(rr, cc){
+        setTimeout(function(){
+          board[rr][cc] = 0;
+          notes[rr][cc].clear();
+          renderBoard();
+        }, 600);
+      })(r, c);
+      return;
+    }
+  }
+  renderBoard(); renderNumpad();
+  if(checkWin()) endGame(true);
+}
+
+function erase(){
+  if(gameOver || won || selected.r < 0) return;
+  var r = selected.r, c = selected.c;
+  if(puzzle[r][c] !== 0) return;
+  saveUndo();
+  board[r][c] = 0; notes[r][c].clear();
+  redoStack = [];
+  updateDushuBadge();
+  renderBoard(); renderNumpad();
+}
+
+/* ========== 快速笔 ========== */
+function quickPen(){
+  if(gameOver || won) return;
+  saveUndo();
+  for(var r=0;r<9;r++) for(var c=0;c<9;c++){
+    if(puzzle[r][c] !== 0 || board[r][c] !== 0) continue;
+    var cands = getCandidates(r, c);
+    cands.forEach(function(n){ notes[r][c].add(n); });
+  }
+  redoStack = [];
+  updateDushuBadge();
+  renderBoard(); renderNumpad();
+}
+
+/* ========== 提示 ========== */
+function giveHint(){
+  if(gameOver || won || hintsLeft <= 0) return;
+  for(var r=0;r<9;r++) for(var c=0;c<9;c++){
+    if(puzzle[r][c] === 0 && board[r][c] !== solution[r][c]){
+      saveUndo();
+      board[r][c] = solution[r][c];
+      notes[r][c].clear();
+      removeCandFromPeers(r, c, solution[r][c]);
+      hintsLeft--;
+      redoStack = [];
+      updateHintBadge(); renderBoard(); renderNumpad();
+      if(checkWin()) endGame(true);
+      return;
+    }
+  }
+}
+
+/* ========== 撤销/重做（游戏模式） ========== */
+function saveUndo(){
+  undoStack.push({
+    board: cloneBoard(board),
+    notes: cloneNotes(notes),
+    mistakes: mistakes,
+    hintsLeft: hintsLeft
+  });
+  if(undoStack.length > 50) undoStack.shift();
+}
+
+function undo(){
+  if(undoStack.length === 0 || gameOver || won) return;
+  redoStack.push({
+    board: cloneBoard(board),
+    notes: cloneNotes(notes),
+    mistakes: mistakes,
+    hintsLeft: hintsLeft
+  });
+  var state = undoStack.pop();
+  board = state.board; notes = state.notes;
+  mistakes = state.mistakes; hintsLeft = state.hintsLeft;
+  updateMistakes(); updateLives(); updateHintBadge();
+  renderBoard(); renderNumpad();
+}
+
+function redo(){
+  if(redoStack.length === 0 || gameOver || won) return;
+  undoStack.push({
+    board: cloneBoard(board),
+    notes: cloneNotes(notes),
+    mistakes: mistakes,
+    hintsLeft: hintsLeft
+  });
+  var state = redoStack.pop();
+  board = state.board; notes = state.notes;
+  mistakes = state.mistakes; hintsLeft = state.hintsLeft;
+  updateMistakes(); updateLives(); updateHintBadge();
+  renderBoard(); renderNumpad();
+}
+
+/* ========== UI更新 ========== */
+function updateLives(){
+  var s = '';
+  for(var i=0;i<maxMistakes;i++) s += (i < maxMistakes - mistakes) ? '\u2764\uFE0F' : '\uD83D\uDDA4';
+  document.getElementById('lives').textContent = s;
+}
+function updateMistakes(){ document.getElementById('mistakes').textContent = mistakes + '/' + maxMistakes; }
+function updateHintBadge(){
+  var el = document.getElementById('hintBadge');
+  el.textContent = hintsLeft;
+  el.style.display = (hintsLeft > 0) ? 'flex' : 'none';
+}
+function updateTimer(){
+  var m = String(Math.floor(timerSec/60)).padStart(2,'0');
+  var s = String(timerSec%60).padStart(2,'0');
+  document.getElementById('timer').textContent = m + ':' + s;
+}
+function updateProgress(){
+  var filled = 0;
+  for(var r=0;r<9;r++) for(var c=0;c<9;c++){
+    if(board[r][c] === solution[r][c] && board[r][c] !== 0) filled++;
+  }
+  document.getElementById('progressBar').style.width = (filled/81*100) + '%';
+}
+function checkWin(){
+  for(var r=0;r<9;r++) for(var c=0;c<9;c++){
+    if(board[r][c] !== solution[r][c]) return false;
+  }
+  return true;
+}
+function endGame(isWin){
+  clearInterval(timerInterval);
+  var el = document.getElementById('inlineMsg');
+  if(isWin){
+    won = true;
+    el.textContent = '\uD83C\uDF89 恭喜通关！';
+    el.className = 'inline-msg success';
+  } else {
+    gameOver = true;
+    el.textContent = '\uD83D\uDC94 游戏结束，再试一次！';
+    el.className = 'inline-msg fail';
+  }
+  el.style.display = 'block';
+  setTimeout(function(){ el.style.display = 'none'; }, 4000);
+}
+
+/* ========== 笔记模式切换 ========== */
+function toggleNote(){
+  noteMode = !noteMode;
+  document.getElementById('btnNote').classList.toggle('active', noteMode);
+}
+
+/* ========== 键盘支持 ========== */
+document.addEventListener('keydown', function(e){
+  if(gameOver || won) return;
+  if(drawMode) return; // 画图模式下禁用游戏键盘快捷键
+  var k = e.key;
+  if(k >= '1' && k <= '9'){ inputNumber(parseInt(k)); return; }
+  if(k === 'Backspace' || k === 'Delete'){ erase(); return; }
+  if(k === 'n' || k === 'N'){ toggleNote(); return; }
+  if(e.ctrlKey && k === 'z'){ e.preventDefault(); undo(); return; }
+  if(e.ctrlKey && k === 'y'){ e.preventDefault(); redo(); return; }
+  if(k === 'ArrowUp' && selected.r > 0){ selectCell(selected.r-1, selected.c); return; }
+  if(k === 'ArrowDown' && selected.r < 8){ selectCell(selected.r+1, selected.c); return; }
+  if(k === 'ArrowLeft' && selected.c > 0){ selectCell(selected.r, selected.c-1); return; }
+  if(k === 'ArrowRight' && selected.c < 8){ selectCell(selected.r, selected.c+1); return; }
+});
+
+/* ========== 按钮绑定 ========== */
+document.getElementById('btnDraw').addEventListener('click', toggleDrawMode);
+document.getElementById('btnErase').addEventListener('click', erase);
+document.getElementById('btnNote').addEventListener('click', toggleNote);
+document.getElementById('btnHint').addEventListener('click', giveHint);
+document.getElementById('btnUndo').addEventListener('click', undo);
+document.getElementById('btnRedo').addEventListener('click', redo);
+document.getElementById('btnQuickPen').addEventListener('click', quickPen);
+document.getElementById('btnDushu').addEventListener('click', fillDushu);
+document.getElementById('btnNewGame').addEventListener('click', function(){
+  document.getElementById('inlineMsg').style.display = 'none';
+  initGame();
+});
+
+/* 画图模式按钮绑定 */
+document.getElementById('btnDrawExit').addEventListener('click', toggleDrawMode);
+document.getElementById('btnDrawUndo').addEventListener('click', drawUndo);
+document.getElementById('btnDrawRedo').addEventListener('click', drawRedo);
+document.getElementById('btnDrawClear').addEventListener('click', drawClear);
+document.getElementById('btnDrawGreen').addEventListener('click', function(){
+  if(drawMarkMode === 'green') drawMarkMode = 'none';
+  else drawMarkMode = 'green';
+  updateDrawToolbarUI();
+});
+document.getElementById('btnDrawRed').addEventListener('click', function(){
+  if(drawMarkMode === 'red') drawMarkMode = 'none';
+  else drawMarkMode = 'red';
+  updateDrawToolbarUI();
+});
+
+/* ========== 补充CSS：宫边界下/右粗线 ========== */
+(function(){
+  var st = document.createElement('style');
+  st.textContent = '' +
+    '.cell.box-bottom{border-bottom:2px solid #2C2C2A !important}' +
+    '.cell.box-right{border-right:2px solid #2C2C2A !important}';
+  document.head.appendChild(st);
+})();
+
+/* ========== 启动 ========== */
+// 注册Service Worker（支持离线）
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('./service-worker.js').then(function(registration) {
+      console.log('ServiceWorker 注册成功: ', registration.scope);
+    }, function(err) {
+      console.log('ServiceWorker 注册失败: ', err);
+    });
+  });
+}
+initGame();
+</script>
+</body>
+</html>
