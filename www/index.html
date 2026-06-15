@@ -8,47 +8,46 @@
 <title>标准数独</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Segoe UI',Arial,sans-serif;background:linear-gradient(135deg,#e8f0fe,#f5f0ff);min-height:100vh;display:flex;justify-content:center;align-items:center;padding:10px}
-.game-container{background:#fff;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,.12);max-width:420px;width:100%;padding:16px 12px 12px;display:flex;flex-direction:column;align-items:center}
+body{font-family:'Segoe UI',Arial,sans-serif;background:linear-gradient(135deg,#e8f0fe,#f5f0ff);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:4px 4px 6px;overflow:hidden}
+
+/* ===== 游戏容器：尽量占满屏幕 ===== */
+.game-container{background:#fff;border-radius:14px;box-shadow:0 8px 32px rgba(0,0,0,.12);width:100%;max-width:520px;padding:8px 5px 10px;display:flex;flex-direction:column;align-items:center}
 
 /* 顶栏 */
-.top-bar{width:100%;position:relative;margin-bottom:8px;padding:0 4px;height:36px}
-.top-bar .title{position:relative;left:0;top:50%;transform:translateY(-50%);font-size:20px;font-weight:700;color:#2C2C2A;white-space:nowrap;display:inline-flex;align-items:baseline}
-.top-bar .title .version{font-size:10px;font-weight:400;color:#999;margin-left:4px;line-height:1}
-.top-bar .lives{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:18px;letter-spacing:2px;white-space:nowrap}
-.top-bar .info{position:absolute;right:0;top:50%;transform:translateY(-50%);display:flex;align-items:center;gap:8px;font-size:13px;color:#666}
-.top-bar .mistakes{display:none}
-.top-bar .timer{color:#555;font-variant-numeric:tabular-nums}
+.top-bar{width:100%;position:relative;margin-bottom:6px;padding:0 4px;height:34px;display:flex;align-items:center}
+.top-bar .title{font-size:18px;font-weight:700;color:#2C2C2A;white-space:nowrap;display:inline-flex;align-items:baseline}
+.top-bar .title .version{font-size:9px;font-weight:400;color:#999;margin-left:4px;line-height:1}
+.top-bar .lives{font-size:16px;letter-spacing:2px;white-space:nowrap;position:absolute;left:50%;transform:translateX(-50%)}
+.top-bar .spacer{flex:1}
+.top-bar .timer{font-size:13px;color:#555;font-variant-numeric:tabular-nums;white-space:nowrap;margin-right:16px}
+.top-bar .btn-settings{background:none;border:none;font-size:18px;cursor:pointer;padding:4px 6px;border-radius:6px;line-height:1;color:#555}
+.top-bar .btn-settings:hover{background:#F0F0F0}
 
 /* 进度条 */
-.progress-wrap{width:100%;margin-bottom:8px;padding:0 2px}
-.progress-bar-bg{width:100%;height:6px;background:#eee;border-radius:3px;overflow:hidden}
+.progress-wrap{width:100%;margin-bottom:6px;padding:0 2px}
+.progress-bar-bg{width:100%;height:5px;background:#eee;border-radius:3px;overflow:hidden}
 .progress-bar{height:100%;background:linear-gradient(90deg,#4CAF50,#8BC34A);border-radius:3px;transition:width .3s}
 
-/* 棋盘 */
-.board-wrap{position:relative;width:100%;margin-bottom:10px;display:flex;justify-content:center}
-.board{display:grid;grid-template-columns:repeat(9,1fr);gap:0;flex:1;min-width:0;aspect-ratio:1;border:2.5px solid #2C2C2A;border-radius:4px;overflow:hidden;background:#2C2C2A;padding:0;width:100%;max-width:420px}
-.cell{position:relative;aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:clamp(14px,4vw,22px);cursor:pointer;user-select:none;transition:background .15s;border:none;background:#fff}
-.cell{border-top:0.5px solid #D3D1C7;border-left:0.5px solid #D3D1C7}
-.cell.box-top{border-top:2px solid #2C2C2A !important}
-.cell.box-left{border-left:2px solid #2C2C2A !important}
-.cell.outer-top{border-top:2.5px solid #2C2C2A !important}
-.cell.outer-left{border-left:2.5px solid #2C2C2A !important}
-
-.cell.given{font-weight:700;color:#2C2C2A}
-.cell.user-input{color:#1976D2;font-weight:600}
-.cell.user-input.wrong{color:#e74c3c}
-.cell.notes{display:grid !important;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);align-items:center;justify-items:center;padding:0}
-.cell.notes span{font-size:clamp(6px,1.8vw,10px);line-height:1.2;text-align:center;padding:0 1px;border-radius:2px;transition:background .15s}
+/* 棋盘区域：占据剩余空间，防止溢出 */
+.board-wrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;width:100%;overflow:hidden}
+.board{display:grid;grid-template-columns:repeat(9,1fr);grid-template-rows:repeat(9,1fr);gap:0;width:100%;max-height:100%;aspect-ratio:1;border:2.5px solid #2C2C2A;border-radius:4px;overflow:hidden;background:#2C2C2A;padding:0}
+.cell{position:relative;aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:clamp(15px,4.5vw,24px);cursor:pointer;user-select:none;transition:background .15s;border:none;background:#fff;overflow:hidden}
+.cell.notes{display:grid !important;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);align-items:center;justify-items:center;padding:0;aspect-ratio:1 !important}
+.cell.notes span{font-size:clamp(5px,1.2vw,9px);line-height:1;text-align:center;padding:0;border-radius:2px;transition:background .15s}
 .cell.notes span.highlight-cand{background:#FFF9C4 !important;border-radius:3px;font-weight:700;color:#222;padding:1px 2px}
 .cell.notes span.mark-green{background:#A5D6A7 !important;color:#1B5E20;font-weight:700}
 .cell.notes span.mark-red{background:#EF9A9A !important;color:#B71C1C;font-weight:700}
 .cell.highlight{background:#FFF9C4 !important}
 .cell.highlight-same{background:#B3E5FC !important}
 .cell.selected{background:#388E3C !important}
+.cell{border-top:0.5px solid #D3D1C7;border-left:0.5px solid #D3D1C7}
+.cell.box-top{border-top:2px solid #2C2C2A !important}
+.cell.box-left{border-left:2px solid #2C2C2A !important}
+.cell.outer-top{border-top:2.5px solid #2C2C2A !important}
+.cell.outer-left{border-left:2.5px solid #2C2C2A !important}
 
 /* 工具栏（游戏模式） */
-.toolbar-wrap{width:100%;margin-bottom:10px}
+.toolbar-wrap{width:100%;margin-top:12px;margin-bottom:4px}
 .toolbar-wrap::-webkit-scrollbar{display:none}
 .toolbar-wrap{scrollbar-width:none}
 .toolbar{display:flex;gap:4px;justify-content:space-around;padding:2px 0}
@@ -60,35 +59,34 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:linear-gradient(135deg,#
 .tb-btn.draw-active{background:#E1BEE7;color:#6A1B9A;font-weight:700}
 .tb-btn .badge{position:absolute;top:-4px;right:-4px;background:#e74c3c;color:#fff;font-size:9px;min-width:14px;height:14px;border-radius:7px;display:flex;align-items:center;justify-content:center;padding:0 2px}
 
-/* 画图工具栏（画图模式） */
-.draw-toolbar{width:100%;display:none;flex-direction:column;gap:4px;margin-bottom:8px}
+/* 画图工具栏 */
+.draw-toolbar{width:100%;display:none;flex-direction:column;gap:4px;margin-top:12px;margin-bottom:4px}
 .draw-toolbar.show{display:flex !important}
 .draw-row{display:flex;justify-content:space-between;gap:4px;width:100%}
-.draw-btn{display:flex;align-items:center;justify-content:center;gap:2px;padding:4px 8px;border:none;border-radius:6px;background:#F0F0F0;color:#444;font-size:11px;cursor:pointer;transition:all .15s;white-space:nowrap;min-width:30px}
+.draw-btn{display:flex;align-items:center;justify-content:center;gap:2px;padding:6px 14px;border:none;border-radius:6px;background:#F0F0F0;color:#444;font-size:11px;cursor:pointer;transition:all .15s;white-space:nowrap;min-width:44px}
 .draw-btn:hover{background:#E0E0E0}
 .draw-btn.mode-green{background:#A5D6A7 !important;color:#1B5E20;font-weight:700}
 .draw-btn.mode-red{background:#EF9A9A !important;color:#B71C1C;font-weight:700}
-.draw-btn .badge{position:absolute;top:-4px;right:-4px;background:#e74c3c;color:#fff;font-size:9px;min-width:14px;height:14px;border-radius:7px;display:flex;align-items:center;justify-content:center;padding:0 2px}
 
 /* 数字键盘 */
-.numpad{width:100%;display:grid;grid-template-columns:repeat(9,1fr);gap:3px;margin-bottom:6px}
-.numpad .num-btn{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px 0;border:none;border-radius:6px;background:#E8F5E9;color:#2E7D32;font-size:clamp(13px,3.5vw,18px);font-weight:700;cursor:pointer;transition:all .15s}
+.numpad{width:100%;display:grid;grid-template-columns:repeat(9,1fr);gap:3px;margin-top:10px;margin-bottom:4px}
+.numpad .num-btn{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 0;border:none;border-radius:6px;background:#E8F5E9;color:#2E7D32;font-size:clamp(14px,3.8vw,20px);font-weight:700;cursor:pointer;transition:all .15s}
 .numpad .num-btn:hover{background:#C8E6C9}
 .numpad .num-btn.disabled{background:#F5F5F5;color:#ccc;cursor:not-allowed}
 .numpad .num-btn.dimmed{color:#bbb !important}
-.numpad .num-btn .remaining{font-size:8px;color:#888;font-weight:400;margin-top:1px}
+.numpad .num-btn .remaining{font-size:10px;color:#888;font-weight:400;margin-top:1px}
 
 /* 画图数字键盘 */
-.draw-numpad{width:100%;display:none;grid-template-columns:repeat(9,1fr);gap:3px;margin-bottom:6px}
+.draw-numpad{width:100%;display:none;grid-template-columns:repeat(9,1fr);gap:3px;margin-top:10px;margin-bottom:4px}
 .draw-numpad.show{display:grid !important}
-.draw-numpad .draw-num-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px 0;border:none;border-radius:6px;background:#E8F5E9;color:#2E7D32;font-size:clamp(13px,3.5vw,18px);font-weight:700;cursor:pointer;transition:all .15s}
-.draw-numpad .draw-num-btn .remaining{font-size:8px;color:#888;font-weight:400;margin-top:1px}
+.draw-numpad .draw-num-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 0;border:none;border-radius:6px;background:#E8F5E9;color:#2E7D32;font-size:clamp(14px,3.8vw,20px);font-weight:700;cursor:pointer;transition:all .15s}
+.draw-numpad .draw-num-btn .remaining{font-size:10px;color:#888;font-weight:400;margin-top:1px}
 .draw-num-btn.selected{background:#A5D6A7 !important;color:#1B5E20}
 .draw-numpad .draw-num-btn:hover{background:#C8E6C9}
 .draw-numpad .draw-num-btn.selected{background:#C8E6C9;box-shadow:0 0 0 2px #2E7D32}
 
 /* 底部栏 */
-.bottom-bar{width:100%;display:flex;justify-content:space-between;align-items:center;padding:0 2px}
+.bottom-bar{width:100%;display:flex;justify-content:space-between;align-items:center;padding:0 2px;margin-top:10px}
 .bottom-bar select{padding:5px 8px;border:1px solid #ccc;border-radius:6px;font-size:13px;background:#fff;cursor:pointer}
 .bottom-bar .new-game-btn{padding:6px 18px;border:none;border-radius:8px;background:#1976D2;color:#fff;font-size:13px;font-weight:600;cursor:pointer;transition:background .15s}
 .bottom-bar .new-game-btn:hover{background:#1565C0}
@@ -98,47 +96,57 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:linear-gradient(135deg,#
 .inline-msg{width:100%;padding:10px;text-align:center;border-radius:8px;font-size:15px;font-weight:600;margin-bottom:8px;animation:fadeIn .3s}
 .inline-msg.success{background:#E8F5E9;color:#2E7D32;border:1px solid #A5D6A7}
 .inline-msg.fail{background:#FFEBEE;color:#C62828;border:1px solid #EF9A9A}
-/* 棋盘坐标标签（已隐藏，最大化九宫格宽度） */
+
+/* 棋盘坐标标签（已隐藏） */
 .board-frame{display:flex;flex-direction:column;align-items:center;width:100%}
 .board-header{display:none}
-.board-header-corner{display:none}
 .board-col-labels{display:none}
 .board-body{display:flex;width:100%;justify-content:center}
 .board-row-labels{display:none}
-.board{flex:1;min-width:0;width:100%;max-width:420px}
+.board{flex:1;min-width:0;width:100%}
 
 @keyframes fadeIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+
+/* ===== 设置弹窗 ===== */
+.settings-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.45);z-index:1000;justify-content:center;align-items:center}
+.settings-overlay.show{display:flex !important}
+.settings-panel{background:#fff;border-radius:16px;width:92%;max-width:380px;padding:20px 18px 14px;box-shadow:0 8px 40px rgba(0,0,0,.25);display:flex;flex-direction:column;gap:14px}
+.settings-panel h3{font-size:16px;font-weight:700;color:#2C2C2A;text-align:center;margin-bottom:2px}
+.setting-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.setting-row label{font-size:13px;color:#444;white-space:nowrap}
+.setting-row .slider-val{font-size:12px;color:#1976D2;font-weight:600;min-width:32px;text-align:right}
+.setting-row input[type=range]{flex:1;accent-color:#1976D2;height:4px}
+.settings-btns{display:flex;gap:10px;margin-top:6px}
+.settings-btns button{flex:1;padding:8px 0;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:background .15s}
+.settings-btns .btn-cancel{background:#F0F0F0;color:#666}
+.settings-btns .btn-cancel:hover{background:#E0E0E0}
+.settings-btns .btn-confirm{background:#1976D2;color:#fff}
+.settings-btns .btn-confirm:hover{background:#1565C0}
 </style>
 </head>
 <body>
 <div class="game-container" id="app">
+  <!-- 顶栏 -->
   <div class="top-bar">
     <span class="title">数独<span class="version">V1.0</span></span>
     <span class="lives" id="lives"></span>
-    <div class="info">
-      <span class="mistakes" id="mistakes">0/3</span>
-      <span class="timer" id="timer">00:00</span>
-    </div>
+    <span class="spacer"></span>
+    <span class="timer" id="timer">00:00</span>
+    <button class="btn-settings" id="btnSettings" title="设置">&#x2699;</button>
   </div>
+
   <div class="progress-wrap">
     <div class="progress-bar-bg"><div class="progress-bar" id="progressBar" style="width:0%"></div></div>
   </div>
+
   <div class="board-wrap">
     <div class="board-frame">
-      <div class="board-header">
-        <div class="board-header-corner"></div>
-        <div class="board-col-labels">
-          <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span>
-        </div>
-      </div>
       <div class="board-body">
-        <div class="board-row-labels">
-          <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span>
-        </div>
         <div class="board" id="board"></div>
       </div>
     </div>
   </div>
+
   <div id="inlineMsg" class="inline-msg" style="display:none"></div>
 
   <!-- 游戏模式工具栏 -->
@@ -183,10 +191,12 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:linear-gradient(135deg,#
   <div class="draw-toolbar" id="drawToolbar">
     <div class="draw-row" style="justify-content:space-between;width:100%">
       <button class="draw-btn" id="btnDrawExit" title="返回填数">返回填数</button>
-      <div style="display:flex;gap:6px">
+      <div style="display:flex;align-items:center;gap:4px">
         <button class="draw-btn" id="btnDrawClear">清屏</button>
+        <div style="width:16px"></div>
         <button class="draw-btn" id="btnDrawUndo" title="撤销">&#x2190;</button>
         <button class="draw-btn" id="btnDrawRedo" title="重做">&#x2192;</button>
+        <div style="width:16px"></div>
         <button class="draw-btn" id="btnDrawGreen" title="对号标记">&#x2713;</button>
         <button class="draw-btn" id="btnDrawRed" title="叉号标记">&#x2717;</button>
       </div>
@@ -195,7 +205,6 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:linear-gradient(135deg,#
 
   <!-- 游戏模式数字键盘 -->
   <div class="numpad" id="numpad"></div>
-
   <!-- 画图模式数字键盘 -->
   <div class="draw-numpad" id="drawNumpad"></div>
 
@@ -211,12 +220,78 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:linear-gradient(135deg,#
   <div class="credit">设计：褚军伟</div>
 </div>
 
+<!-- 设置弹窗 -->
+<div class="settings-overlay" id="settingsOverlay">
+  <div class="settings-panel">
+    <h3>&#x2699; 设置</h3>
+    <div class="setting-row">
+      <label>候选数字体大小</label>
+      <input type="range" id="settingFontRange" min="7" max="16" step="1" value="10">
+      <span class="slider-val" id="settingFontVal">10px</span>
+    </div>
+    <div class="settings-btns">
+      <button class="btn-cancel" id="btnSettingsCancel">取消</button>
+      <button class="btn-confirm" id="btnSettingsConfirm">确定</button>
+    </div>
+  </div>
+</div>
+
 <script>
 "use strict";
 
-/* ========== 数独生成器 ========== */
+/* ========== 设置系统 ========== */
+var appSettings = { noteFontSize: 10 }; // 默认值（px）
+
+function loadSettings(){
+  try {
+    var s = localStorage.getItem('sudoku_settings');
+    if(s) appSettings = JSON.parse(s);
+  } catch(e){}
+  // 应用到 UI
+  applySettings();
+}
+
+function saveSettings(){
+  localStorage.setItem('sudoku_settings', JSON.stringify(appSettings));
+}
+
+function applySettings(){
+  // 设置候选数字体大小
+  var css = '.cell.notes span{font-size:clamp(' + (appSettings.noteFontSize-1) + 'px, ' + (appSettings.noteFontSize/10) + 'vw, ' + (appSettings.noteFontSize+3) + 'px) !important;}';
+  var st = document.getElementById('dynamicSettingsStyle');
+  if(!st){
+    st = document.createElement('style');
+    st.id = 'dynamicSettingsStyle';
+    document.head.appendChild(st);
+  }
+  st.textContent = css;
+}
+
+function openSettings(){
+  document.getElementById('settingFontRange').value = appSettings.noteFontSize;
+  document.getElementById('settingFontVal').textContent = appSettings.noteFontSize + 'px';
+  document.getElementById('settingsOverlay').classList.add('show');
+}
+
+function closeSettings(save){
+  var overlay = document.getElementById('settingsOverlay');
+  if(save){
+    appSettings.noteFontSize = parseInt(document.getElementById('settingFontRange').value);
+    saveSettings();
+    applySettings();
+  }
+  overlay.classList.remove('show');
+}
+
+// 滑块实时显示
+document.getElementById('settingFontRange').addEventListener('input', function(){
+  document.getElementById('settingFontVal').textContent = this.value + 'px';
+});
+
+/* ========== 数独生成器（含唯一解检测） ========== */
 function generateSudoku(difficulty){
   var board = Array.from({length:9}, function(){ return Array(9).fill(0); });
+
   function shuffle(a){
     for(var i=a.length-1;i>0;i--){
       var j = Math.floor(Math.random()*(i+1));
@@ -255,15 +330,85 @@ function generateSudoku(difficulty){
     }
     return true;
   }
+
+  // 生成完整解
   fill(board);
   var solution = board.map(function(r){ return r.slice(); });
+
+  // 逐步挖空，确保唯一解
   var blanks = {easy:38, medium:46, hard:54, hell:60}[difficulty] || 46;
   var positions = shuffle(Array.from({length:81}, function(_, i){ return i; }));
-  for(var i=0;i<blanks;i++){
+
+  // 先挖足够多的格子
+  var puzzleBoard = solution.map(function(r){ return r.slice(); });
+  for(var i=0;i<positions.length;i++){
     var rr = Math.floor(positions[i]/9), cc = positions[i]%9;
-    board[rr][cc] = 0;
+    // 尝试挖这个格子
+    var backup = puzzleBoard[rr][cc];
+    puzzleBoard[rr][cc] = 0;
+    // 检查是否仍唯一解
+    if(countSolutions(puzzleBoard, 2) !== 1){
+      // 不唯一，恢复
+      puzzleBoard[rr][cc] = backup;
+    }
+    // 已达到目标空格数则停止
+    var blankCount = 0;
+    for(var r=0;r<9;r++) for(var c=0;c<9;c++) if(puzzleBoard[r][c]===0) blankCount++;
+    if(blankCount >= blanks) break;
   }
-  return { solution:solution, puzzle:board.map(function(r){ return r.slice(); }) };
+
+  // 如果空格数不够（极端情况），继续随机挖（可能失去唯一解，但尽力而为）
+  for(var i=0;i<positions.length;i++){
+    var rr = Math.floor(positions[i]/9), cc = positions[i]%9;
+    if(puzzleBoard[rr][cc] !== 0){
+      puzzleBoard[rr][cc] = 0;
+      var blankCount = 0;
+      for(var r=0;r<9;r++) for(var c=0;c<9;c++) if(puzzleBoard[r][c]===0) blankCount++;
+      if(blankCount >= blanks) break;
+    }
+  }
+
+  return { solution:solution, puzzle:puzzleBoard };
+}
+
+/* ========== 唯一解检测 ========== */
+function countSolutions(b, maxCount){
+  var callCount = 0;
+  var limit = 80000; // 安全限制，防止卡死
+  function solve(r, c){
+    if(callCount++ > limit) return 0;
+    // 找下一个空格
+    while(r < 9 && b[r][c] !== 0){
+      c++;
+      if(c >= 9){ c = 0; r++; }
+    }
+    if(r >= 9) return 1;
+    var count = 0;
+    for(var n = 1; n <= 9; n++){
+      if(isValidCell(b, r, c, n)){
+        b[r][c] = n;
+        count += solve(r, c);
+        b[r][c] = 0;
+        if(count >= maxCount) return count;
+      }
+    }
+    return count;
+  }
+  return solve(0, 0);
+}
+
+function isValidCell(b, r, c, num){
+  for(var i=0;i<9;i++){
+    if(b[r][i] === num) return false;
+    if(b[i][c] === num) return false;
+  }
+  var br = Math.floor(r/3)*3, bc = Math.floor(c/3)*3;
+  for(var i=br;i<br+3;i++){
+    for(var j=bc;j<bc+3;j++){
+      if(b[i][j] === num) return false;
+    }
+  }
+  return true;
 }
 
 /* ========== 游戏状态 ========== */
@@ -275,11 +420,9 @@ var timerSec = 0, timerInterval = null;
 
 /* ========== 画图模式状态 ========== */
 var drawMode = false;
-var drawMarkMode = 'none'; // 'none' | 'green' | 'red'
-var drawSelectedNum = 0;  // 0 = 未选中（底部数字键盘UI用）
-var drawHighlightNum = 0; // 0 = 无高亮，非零=高亮该数字的候选数
-// markGreen[r][c] = Set of numbers marked green in cell (r,c)
-// markRed[r][c]   = Set of numbers marked red in cell (r,c)
+var drawMarkMode = 'none';
+var drawSelectedNum = 0;
+var drawHighlightNum = 0;
 var markGreen = [], markRed = [];
 var drawUndoStack = [], drawRedoStack = [];
 
@@ -299,27 +442,41 @@ function cloneMarks(m){
 /* ========== 初始化 ========== */
 function initGame(){
   var diff = document.getElementById('difficulty').value;
-  var gen = generateSudoku(diff);
-  solution = gen.solution;
-  puzzle = gen.puzzle.map(function(r){ return r.slice(); });
-  board = puzzle.map(function(r){ return r.slice(); });
-  notes = Array.from({length:9}, function(){
-    return Array.from({length:9}, function(){ return new Set(); });
-  });
-  initMarks();
-  mistakes = 0; maxMistakes = 3; hintsLeft = 3;
-  gameOver = false; won = false;
-  selected = {r:-1, c:-1}; noteMode = false;
-  undoStack = []; redoStack = [];
-  clearInterval(timerInterval); timerSec = 0;
-  timerInterval = setInterval(function(){
-    if(!gameOver && !won){ timerSec++; updateTimer(); }
-  }, 1000);
-  document.getElementById('btnNote').classList.remove('active');
-  // 退出画图模式
-  if(drawMode) toggleDrawMode();
-  updateLives(); updateMistakes(); updateHintBadge(); updateDushuBadge();
-  renderBoard(); renderNumpad();
+  showLoading(true);
+  setTimeout(function(){
+    var gen = generateSudoku(diff);
+    solution = gen.solution;
+    puzzle = gen.puzzle.map(function(r){ return r.slice(); });
+    board = puzzle.map(function(r){ return r.slice(); });
+    notes = Array.from({length:9}, function(){
+      return Array.from({length:9}, function(){ return new Set(); });
+    });
+    initMarks();
+    mistakes = 0; maxMistakes = 3; hintsLeft = 3;
+    gameOver = false; won = false;
+    selected = {r:-1, c:-1}; noteMode = false;
+    undoStack = []; redoStack = [];
+    clearInterval(timerInterval); timerSec = 0;
+    timerInterval = setInterval(function(){
+      if(!gameOver && !won){ timerSec++; updateTimer(); }
+    }, 1000);
+    document.getElementById('btnNote').classList.remove('active');
+    if(drawMode) toggleDrawMode();
+    updateLives(); updateMistakes(); updateHintBadge(); updateDushuBadge();
+    renderBoard(); renderNumpad();
+    showLoading(false);
+  }, 50);
+}
+
+function showLoading(show){
+  var el = document.getElementById('inlineMsg');
+  if(show){
+    el.textContent = '生成中...';
+    el.className = 'inline-msg';
+    el.style.display = 'block';
+  } else {
+    el.style.display = 'none';
+  }
 }
 
 /* ========== 候选数计算 ========== */
@@ -341,14 +498,9 @@ function getCandidates(r, c){
   return cands;
 }
 
-/* ========== 候选数自动清除：填入数字后，清除同行/列/宫的相同候选数 ========== */
 function removeCandFromPeers(r, c, n){
-  for(var i=0;i<9;i++){
-    if(i !== c) notes[r][i].delete(n);
-  }
-  for(var i=0;i<9;i++){
-    if(i !== r) notes[i][c].delete(n);
-  }
+  for(var i=0;i<9;i++){ if(i !== c) notes[r][i].delete(n); }
+  for(var i=0;i<9;i++){ if(i !== r) notes[i][c].delete(n); }
   var br=Math.floor(r/3)*3, bc=Math.floor(c/3)*3;
   for(var i=br;i<br+3;i++){
     for(var j=bc;j<bc+3;j++){
@@ -377,12 +529,8 @@ function getDushuCells(){
 function updateDushuBadge(){
   var el = document.getElementById('dushuBadge');
   var cells = getDushuCells();
-  if(cells.length > 0){
-    el.textContent = cells.length;
-    el.style.display = 'flex';
-  } else {
-    el.style.display = 'none';
-  }
+  if(cells.length > 0){ el.textContent = cells.length; el.style.display = 'flex'; }
+  else { el.style.display = 'none'; }
 }
 
 function fillDushu(){
@@ -430,17 +578,10 @@ function toggleDrawMode(){
     drawNumpad.classList.add('show');
     bottomBar.style.display = 'none';
     credit.style.display = 'none';
-    // 进入解题模式：先保存选中格子的数字，再清除选中状态（绿色/黄色底纹消失）
     var prevSelectedVal = (selected.r >= 0 && board[selected.r][selected.c] !== 0) ? board[selected.r][selected.c] : 0;
     selected = {r:-1, c:-1};
-    // 设置候选数高亮
-    if(prevSelectedVal !== 0){
-      drawHighlightNum = prevSelectedVal;
-      drawSelectedNum = drawHighlightNum;
-    } else {
-      drawHighlightNum = 0;
-      drawSelectedNum = 0;
-    }
+    if(prevSelectedVal !== 0){ drawHighlightNum = prevSelectedVal; drawSelectedNum = drawHighlightNum; }
+    else { drawHighlightNum = 0; drawSelectedNum = 0; }
     drawMarkMode = 'none';
     updateDrawToolbarUI();
     renderDrawNumpad();
@@ -474,87 +615,61 @@ function renderDrawNumpad(){
     var btn = document.createElement('div');
     btn.className = 'draw-num-btn' + (drawSelectedNum === n ? ' selected' : '');
     btn.innerHTML = String(n) + '<span class="remaining">' + (9-counts[n]) + '</span>';
-    (function(nn){
-      btn.addEventListener('click', function(){ selectDrawNum(nn); });
-    })(n);
+    (function(nn){ btn.addEventListener('click', function(){ selectDrawNum(nn); }); })(n);
     el.appendChild(btn);
   }
 }
 
 function selectDrawNum(n){
-  // 点击底部数字：切换高亮，同时更新键盘UI选中状态
-  if(drawHighlightNum === n){
-    drawHighlightNum = 0;
-  } else {
-    drawHighlightNum = n;
-  }
+  if(drawHighlightNum === n){ drawHighlightNum = 0; }
+  else { drawHighlightNum = n; }
   drawSelectedNum = drawHighlightNum;
   renderDrawNumpad();
   renderBoard();
 }
 
 function saveDrawUndo(){
-  drawUndoStack.push({
-    markGreen: cloneMarks(markGreen),
-    markRed: cloneMarks(markRed)
-  });
+  drawUndoStack.push({ markGreen: cloneMarks(markGreen), markRed: cloneMarks(markRed) });
   if(drawUndoStack.length > 50) drawUndoStack.shift();
 }
 
 function drawUndo(){
   if(drawUndoStack.length === 0) return;
-  drawRedoStack.push({
-    markGreen: cloneMarks(markGreen),
-    markRed: cloneMarks(markRed)
-  });
+  drawRedoStack.push({ markGreen: cloneMarks(markGreen), markRed: cloneMarks(markRed) });
   var state = drawUndoStack.pop();
-  markGreen = state.markGreen;
-  markRed = state.markRed;
+  markGreen = state.markGreen; markRed = state.markRed;
   renderBoard();
 }
 
 function drawRedo(){
   if(drawRedoStack.length === 0) return;
-  drawUndoStack.push({
-    markGreen: cloneMarks(markGreen),
-    markRed: cloneMarks(markRed)
-  });
+  drawUndoStack.push({ markGreen: cloneMarks(markGreen), markRed: cloneMarks(markRed) });
   var state = drawRedoStack.pop();
-  markGreen = state.markGreen;
-  markRed = state.markRed;
+  markGreen = state.markGreen; markRed = state.markRed;
   renderBoard();
 }
 
 function drawClear(){
   saveDrawUndo();
-  for(var r=0;r<9;r++) for(var c=0;c<9;c++){
-    markGreen[r][c].clear();
-    markRed[r][c].clear();
-  }
+  for(var r=0;r<9;r++) for(var c=0;c<9;c++){ markGreen[r][c].clear(); markRed[r][c].clear(); }
   drawRedoStack = [];
   renderBoard();
 }
 
-/* 应用标记到格子(r,c) */
 function applyDrawMark(r, c){
   if(drawMarkMode === 'none' || drawSelectedNum === 0) return;
   var n = drawSelectedNum;
+  // 若格子中没有候选数n，则不做任何操作
+  if(!notes[r][c].has(n)) return;
   saveDrawUndo();
   if(drawMarkMode === 'green'){
-    // 标记为绿色，同时从红色中移除
     markGreen[r][c].add(n);
     markRed[r][c].delete(n);
-    // 同格内其他候选数标红
     for(var m=1; m<=9; m++){
-      if(m !== n && notes[r][c].has(m)){
-        markRed[r][c].add(m);
-        markGreen[r][c].delete(m);
-      }
+      if(m !== n && notes[r][c].has(m)){ markRed[r][c].add(m); markGreen[r][c].delete(m); }
     }
-    // 同行/列/宫的相同数字标红
     autoMarkRedPeers(r, c, n);
   } else if(drawMarkMode === 'red'){
-    // 标记为红色，同时从绿色中移除
     markRed[r][c].add(n);
     markGreen[r][c].delete(n);
   }
@@ -562,25 +677,14 @@ function applyDrawMark(r, c){
   renderBoard();
 }
 
-/* 当(r,c)的候选数n被标绿时，同行/列/宫的其他格子中n标红 */
 function autoMarkRedPeers(r, c, n){
-  // 同行：只标红候选数中有 n 的格子
-  for(var j=0;j<9;j++){
-    if(j !== c && notes[r][j].has(n)){ markRed[r][j].add(n); markGreen[r][j].delete(n); }
-  }
-  // 同列：只标红候选数中有 n 的格子
-  for(var i=0;i<9;i++){
-    if(i !== r && notes[i][c].has(n)){ markRed[i][c].add(n); markGreen[i][c].delete(n); }
-  }
-  // 同宫：只标红候选数中有 n 的格子
+  for(var j=0;j<9;j++){ if(j !== c && notes[r][j].has(n)){ markRed[r][j].add(n); markGreen[r][j].delete(n); } }
+  for(var i=0;i<9;i++){ if(i !== r && notes[i][c].has(n)){ markRed[i][c].add(n); markGreen[i][c].delete(n); } }
   var br = Math.floor(r/3)*3, bc = Math.floor(c/3)*3;
   for(var i=br;i<br+3;i++){
     for(var j=bc;j<bc+3;j++){
       if(i===r && j===c) continue;
-      if(notes[i][j].has(n)){
-        markRed[i][j].add(n);
-        markGreen[i][j].delete(n);
-      }
+      if(notes[i][j].has(n)){ markRed[i][j].add(n); markGreen[i][j].delete(n); }
     }
   }
 }
@@ -594,8 +698,6 @@ function renderBoard(){
       var cell = document.createElement('div');
       cell.className = 'cell';
       cell.dataset.r = r; cell.dataset.c = c;
-
-      /* 边框 class */
       if(r === 0) cell.classList.add('outer-top');
       if(c === 0) cell.classList.add('outer-left');
       if(r === 2 || r === 5) cell.classList.add('box-bottom');
@@ -610,7 +712,6 @@ function renderBoard(){
         cell.classList.add(isGiven ? 'given' : 'user-input');
         if(!isGiven && val !== solution[r][c]) cell.classList.add('wrong');
       } else if(notes[r][c].size > 0 || markGreen[r][c].size > 0 || markRed[r][c].size > 0){
-        // 显示笔记 或 画图标记
         cell.classList.add('notes');
         var highlightVal = drawMode ? drawHighlightNum : ((selected.r >= 0) ? board[selected.r][selected.c] : 0);
         for(var n=1;n<=9;n++){
@@ -625,7 +726,6 @@ function renderBoard(){
           cell.appendChild(s);
         }
       } else if(drawMode){
-        // 画图模式下，空格子也显示标记（如果有）
         cell.classList.add('notes');
         for(var n=1;n<=9;n++){
           var s = document.createElement('span');
@@ -637,34 +737,18 @@ function renderBoard(){
           cell.appendChild(s);
         }
       }
-      // 正常高亮逻辑（游戏模式和画图模式均保留）
-      if(selected.r === r && selected.c === c){
-        cell.classList.add('selected');
-      } else if(selected.r >= 0){
+      if(selected.r === r && selected.c === c){ cell.classList.add('selected'); }
+      else if(selected.r >= 0){
         var sr = selected.r, sc = selected.c;
-        if(r === sr || c === sc || (Math.floor(r/3)===Math.floor(sr/3) && Math.floor(c/3)===Math.floor(sc/3))){
-          cell.classList.add('highlight');
-        }
-        if(board[r][c] === board[sr][sc] && board[r][c] !== 0 && (r !== sr || c !== sc)){
-          cell.classList.add('highlight-same');
-        }
+        if(r === sr || c === sc || (Math.floor(r/3)===Math.floor(sr/3) && Math.floor(c/3)===Math.floor(sc/3))){ cell.classList.add('highlight'); }
+        if(board[r][c] === board[sr][sc] && board[r][c] !== 0 && (r !== sr || c !== sc)){ cell.classList.add('highlight-same'); }
       }
-      // 点击事件
       (function(rr, cc){
         cell.addEventListener('click', function(){
           if(drawMode){
-            if(board[rr][cc] !== 0){
-              // 解题模式下点击有数字的格子：更新高亮状态（互斥），刷新棋盘
-              drawHighlightNum = board[rr][cc];
-              drawSelectedNum = drawHighlightNum;
-              renderDrawNumpad();
-              renderBoard();
-            } else {
-              applyDrawMark(rr, cc);
-            }
-          } else {
-            selectCell(rr, cc);
-          }
+            if(board[rr][cc] !== 0){ drawHighlightNum = board[rr][cc]; drawSelectedNum = drawHighlightNum; renderDrawNumpad(); renderBoard(); }
+            else { applyDrawMark(rr, cc); }
+          } else { selectCell(rr, cc); }
         });
       })(r, c);
       boardEl.appendChild(cell);
@@ -679,7 +763,6 @@ function renderNumpad(){
   npEl.innerHTML = '';
   var counts = Array(10).fill(0);
   for(var r=0;r<9;r++) for(var c=0;c<9;c++){ if(board[r][c]>=1 && board[r][c]<=9) counts[board[r][c]]++; }
-  // 判断当前选中小格是否有候选数
   var selNotes = null;
   if(selected.r >= 0 && board[selected.r][selected.c] === 0 && notes[selected.r][selected.c].size > 0){
     selNotes = notes[selected.r][selected.c];
@@ -690,7 +773,10 @@ function renderNumpad(){
     if(selNotes && !selNotes.has(n)) cls += ' dimmed';
     btn.className = cls;
     btn.innerHTML = String(n) + '<span class="remaining">' + (9-counts[n]) + '</span>';
-    (function(nn){ btn.addEventListener('click', function(){ inputNumber(nn); }); })(n);
+    (function(nn, isDimmed){ btn.addEventListener('click', function(){
+      if(isDimmed) return; // 灰色数字：格子有候选数但不含此数，不允许填写
+      inputNumber(nn);
+    }); })(n, !!(selNotes && !selNotes.has(n)));
     npEl.appendChild(btn);
   }
 }
@@ -699,8 +785,7 @@ function renderNumpad(){
 function selectCell(r, c){
   if(gameOver || won) return;
   selected = {r:r, c:c};
-  renderBoard();
-  renderNumpad();
+  renderBoard(); renderNumpad();
 }
 
 function inputNumber(n){
@@ -725,11 +810,7 @@ function inputNumber(n){
       renderBoard();
       if(mistakes >= maxMistakes){ endGame(false); return; }
       (function(rr, cc){
-        setTimeout(function(){
-          board[rr][cc] = 0;
-          notes[rr][cc].clear();
-          renderBoard();
-        }, 600);
+        setTimeout(function(){ board[rr][cc] = 0; notes[rr][cc].clear(); renderBoard(); }, 600);
       })(r, c);
       return;
     }
@@ -749,7 +830,6 @@ function erase(){
   renderBoard(); renderNumpad();
 }
 
-/* ========== 快速笔 ========== */
 function quickPen(){
   if(gameOver || won) return;
   saveUndo();
@@ -763,7 +843,6 @@ function quickPen(){
   renderBoard(); renderNumpad();
 }
 
-/* ========== 提示 ========== */
 function giveHint(){
   if(gameOver || won || hintsLeft <= 0) return;
   for(var r=0;r<9;r++) for(var c=0;c<9;c++){
@@ -781,25 +860,15 @@ function giveHint(){
   }
 }
 
-/* ========== 撤销/重做（游戏模式） ========== */
+/* ========== 撤销/重做 ========== */
 function saveUndo(){
-  undoStack.push({
-    board: cloneBoard(board),
-    notes: cloneNotes(notes),
-    mistakes: mistakes,
-    hintsLeft: hintsLeft
-  });
+  undoStack.push({ board: cloneBoard(board), notes: cloneNotes(notes), mistakes: mistakes, hintsLeft: hintsLeft });
   if(undoStack.length > 50) undoStack.shift();
 }
 
 function undo(){
   if(undoStack.length === 0 || gameOver || won) return;
-  redoStack.push({
-    board: cloneBoard(board),
-    notes: cloneNotes(notes),
-    mistakes: mistakes,
-    hintsLeft: hintsLeft
-  });
+  redoStack.push({ board: cloneBoard(board), notes: cloneNotes(notes), mistakes: mistakes, hintsLeft: hintsLeft });
   var state = undoStack.pop();
   board = state.board; notes = state.notes;
   mistakes = state.mistakes; hintsLeft = state.hintsLeft;
@@ -809,12 +878,7 @@ function undo(){
 
 function redo(){
   if(redoStack.length === 0 || gameOver || won) return;
-  undoStack.push({
-    board: cloneBoard(board),
-    notes: cloneNotes(notes),
-    mistakes: mistakes,
-    hintsLeft: hintsLeft
-  });
+  undoStack.push({ board: cloneBoard(board), notes: cloneNotes(notes), mistakes: mistakes, hintsLeft: hintsLeft });
   var state = redoStack.pop();
   board = state.board; notes = state.notes;
   mistakes = state.mistakes; hintsLeft = state.hintsLeft;
@@ -828,7 +892,7 @@ function updateLives(){
   for(var i=0;i<maxMistakes;i++) s += (i < maxMistakes - mistakes) ? '\u2764\uFE0F' : '\uD83D\uDDA4';
   document.getElementById('lives').textContent = s;
 }
-function updateMistakes(){ document.getElementById('mistakes').textContent = mistakes + '/' + maxMistakes; }
+function updateMistakes(){ /* 已隐藏 */ }
 function updateHintBadge(){
   var el = document.getElementById('hintBadge');
   el.textContent = hintsLeft;
@@ -855,20 +919,12 @@ function checkWin(){
 function endGame(isWin){
   clearInterval(timerInterval);
   var el = document.getElementById('inlineMsg');
-  if(isWin){
-    won = true;
-    el.textContent = '\uD83C\uDF89 恭喜通关！';
-    el.className = 'inline-msg success';
-  } else {
-    gameOver = true;
-    el.textContent = '\uD83D\uDC94 游戏结束，再试一次！';
-    el.className = 'inline-msg fail';
-  }
+  if(isWin){ won = true; el.textContent = '\uD83C\uDF89 恭喜通关！'; el.className = 'inline-msg success'; }
+  else { gameOver = true; el.textContent = '\uD83D\uDC94 游戏结束，再试一次！'; el.className = 'inline-msg fail'; }
   el.style.display = 'block';
   setTimeout(function(){ el.style.display = 'none'; }, 4000);
 }
 
-/* ========== 笔记模式切换 ========== */
 function toggleNote(){
   noteMode = !noteMode;
   document.getElementById('btnNote').classList.toggle('active', noteMode);
@@ -877,7 +933,7 @@ function toggleNote(){
 /* ========== 键盘支持 ========== */
 document.addEventListener('keydown', function(e){
   if(gameOver || won) return;
-  if(drawMode) return; // 画图模式下禁用游戏键盘快捷键
+  if(drawMode) return;
   var k = e.key;
   if(k >= '1' && k <= '9'){ inputNumber(parseInt(k)); return; }
   if(k === 'Backspace' || k === 'Delete'){ erase(); return; }
@@ -910,37 +966,65 @@ document.getElementById('btnDrawUndo').addEventListener('click', drawUndo);
 document.getElementById('btnDrawRedo').addEventListener('click', drawRedo);
 document.getElementById('btnDrawClear').addEventListener('click', drawClear);
 document.getElementById('btnDrawGreen').addEventListener('click', function(){
-  if(drawMarkMode === 'green') drawMarkMode = 'none';
-  else drawMarkMode = 'green';
+  if(drawMarkMode === 'green') drawMarkMode = 'none'; else drawMarkMode = 'green';
   updateDrawToolbarUI();
 });
 document.getElementById('btnDrawRed').addEventListener('click', function(){
-  if(drawMarkMode === 'red') drawMarkMode = 'none';
-  else drawMarkMode = 'red';
+  if(drawMarkMode === 'red') drawMarkMode = 'none'; else drawMarkMode = 'red';
   updateDrawToolbarUI();
 });
 
-/* ========== 补充CSS：宫边界下/右粗线 ========== */
+/* 设置按钮绑定 */
+document.getElementById('btnSettings').addEventListener('click', openSettings);
+document.getElementById('btnSettingsCancel').addEventListener('click', function(){ closeSettings(false); });
+document.getElementById('btnSettingsConfirm').addEventListener('click', function(){ closeSettings(true); });
+document.getElementById('settingsOverlay').addEventListener('click', function(e){
+  if(e.target === this) closeSettings(false);
+});
+
+/* ========== 动态适配棋盘尺寸，确保完整显示在屏幕内 ========== */
+function fitBoard(){
+  var wrap = document.querySelector('.board-wrap');
+  var board = document.getElementById('board');
+  if(!wrap || !board) return;
+  // 计算游戏容器内可用高度 = 视口高度 - 其他元素高度 - padding
+  var gh = document.querySelector('.game-container');
+  var topH = document.querySelector('.top-bar').offsetHeight;
+  var progH = document.querySelector('.progress-wrap').offsetHeight;
+  var tbH = document.getElementById('toolbarWrap').offsetHeight;
+  var npH = document.querySelector('.numpad') ? document.querySelector('.numpad').offsetHeight : 0;
+  var bbH = document.querySelector('.bottom-bar') ? document.querySelector('.bottom-bar').offsetHeight : 0;
+  var creditH = document.querySelector('.credit') ? document.querySelector('.credit').offsetHeight : 0;
+  var padV = 20; // 容器上下 padding 估算
+  var availH = window.innerHeight - topH - progH - tbH - npH - bbH - creditH - padV - 10;
+  // 可用宽度
+  var availW = gh.offsetWidth - 10;
+  // 棋盘最大边长 = 较小值
+  var size = Math.floor(Math.min(availW, availH));
+  if(size < 200) size = 200; // 最小限制
+  board.style.maxWidth = size + 'px';
+  board.style.maxHeight = size + 'px';
+  board.style.width = '100%';
+}
+window.addEventListener('resize', fitBoard);
+/* ========== 补充CSS：宫边界 ========== */
 (function(){
   var st = document.createElement('style');
-  st.textContent = '' +
-    '.cell.box-bottom{border-bottom:2px solid #2C2C2A !important}' +
-    '.cell.box-right{border-right:2px solid #2C2C2A !important}';
+  st.textContent = '.cell.box-bottom{border-bottom:2px solid #2C2C2A !important}.cell.box-right{border-right:2px solid #2C2C2A !important}';
   document.head.appendChild(st);
 })();
 
 /* ========== 启动 ========== */
-// 注册Service Worker（支持离线）
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function() {
-    navigator.serviceWorker.register('./service-worker.js').then(function(registration) {
-      console.log('ServiceWorker 注册成功: ', registration.scope);
-    }, function(err) {
-      console.log('ServiceWorker 注册失败: ', err);
-    });
+    navigator.serviceWorker.register('./service-worker.js').then(function(reg){
+      console.log('ServiceWorker 注册成功: ', reg.scope);
+    }, function(err){ console.log('ServiceWorker 注册失败: ', err); });
   });
 }
+loadSettings();
 initGame();
+setTimeout(fitBoard, 50);
 </script>
 </body>
 </html>
